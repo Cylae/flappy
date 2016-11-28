@@ -1,4 +1,6 @@
-var game = new Phaser.Game(320,505,Phaser.AUTO,'game'); // Déclaration de Phaser
+// Déclaration de Phaser
+
+var game = new Phaser.Game(800,500,Phaser.AUTO,'game');
 game.States = {}; 
 
 game.States.boot = function(){
@@ -15,6 +17,8 @@ game.States.boot = function(){
 	};
 }
 
+// Préchargement des éléments
+
 game.States.preload = function(){
 	this.preload = function(){
 		var preloadSprite = game.add.sprite(35,game.height/2,'loading'); //Pre-chargement du sprite
@@ -30,21 +34,23 @@ game.States.preload = function(){
     	game.load.audio('score_sound', 'assets/score.wav');// Son tableau de scores
     	game.load.audio('hit_pipe_sound', 'assets/pipe-hit.wav'); //Son "hit" d'une pipe
     	game.load.audio('hit_ground_sound', 'assets/ouch.wav'); //Son "died"
-
-    	game.load.image('ready_text','assets/get-ready.png');
-    	game.load.image('play_tip','assets/instructions.png');
-    	game.load.image('game_over','assets/gameover.png');
-    	game.load.image('score_board','assets/scoreboard.png');
+    	game.load.image('ready_text','assets/get-ready.png');// Image "Get ready"
+    	game.load.image('play_tip','assets/instructions.png');//Image astuce début
+    	game.load.image('game_over','assets/gameover.png');//Image game over
+    	game.load.image('score_board','assets/scoreboard.png');//Image écran score
 	}
-	this.create = function(){
+
+// Menu
+    
+this.create = function(){
 		game.state.start('menu');
 	}
 }
 
 game.States.menu = function(){
 	this.create = function(){
-		game.add.tileSprite(0,0,game.width,game.height,'background').autoScroll(-10,0); //
-		game.add.tileSprite(0,game.height-112,game.width,112,'ground').autoScroll(-100,0); //
+		game.add.tileSprite(0,0,game.width,game.height,'background'); //
+		game.add.tileSprite(0,game.height-112,game.width,112,'ground'); //
 		var titleGroup = game.add.group(); //
 		titleGroup.create(0,0,'title'); //
 		var bird = titleGroup.create(190, 10, 'bird'); //
@@ -59,6 +65,8 @@ game.States.menu = function(){
 		btn.anchor.setTo(0.5,0.5);
 	}
 }
+
+// Paramètres en jeu //
 
 game.States.play = function(){
 	this.create = function(){
@@ -78,7 +86,6 @@ game.States.play = function(){
 		this.soundHitPipe = game.add.sound('hit_pipe_sound');
 		this.soundHitGround = game.add.sound('hit_ground_sound');
 		this.scoreText = game.add.bitmapText(game.world.centerX-20, 30, 'flappy_font', '0', 36);
-
 		this.readyText = game.add.image(game.width/2, 40, 'ready_text'); //Affichage image "get ready"
 		this.playTip = game.add.image(game.width/2,300,'play_tip'); //Affichage du l'aide au début de la partie
 		this.readyText.anchor.setTo(0.5, 0);
@@ -87,17 +94,18 @@ game.States.play = function(){
 		this.hasStarted = false; 
 		game.time.events.loop(900, this.generatePipes, this);
 		game.time.events.stop(false);
-		game.input.onDown.addOnce(this.statrGame, this);
+		game.input.onDown.addOnce(this.test, this);
 	};
+    
 	this.update = function(){
 		if(!this.hasStarted) return; 
 		game.physics.arcade.collide(this.bird,this.ground, this.hitGround, null, this); //Vérification de la collision
 		game.physics.arcade.overlap(this.bird, this.pipeGroup, this.hitPipe, null, this); //Vérification de chevauchement
 		if(this.bird.angle < 90) this.bird.angle += 2.5; //
-		this.pipeGroup.forEachExists(this.checkScore,this); //
+		this.pipeGroup.forEachExists(this.checkScore,this); //Calcul du score
 	}
 
-	this.statrGame = function(){
+	this.test = function(){
 		this.gameSpeed = 600; //Définition de la vitesse de défilement
 		this.gameIsOver = false;
 		this.hasHitGround = false;
@@ -105,7 +113,7 @@ game.States.play = function(){
 		this.score = 0;
 		this.bg.autoScroll(-(this.gameSpeed/10),0);
 		this.ground.autoScroll(-this.gameSpeed,0);
-		this.bird.body.gravity.y = 1000; // Définition de la gravité (1000 mode normal - 1150 plus difficile)
+		this.bird.body.gravity.y = 2000; // Définition de la gravité (1000 mode normal - 1150 plus difficile)
 		this.readyText.destroy();
 		this.playTip.destroy();
 		game.input.onDown.add(this.fly, this);
@@ -115,6 +123,9 @@ game.States.play = function(){
 		game.time.events.start();
 	}
 
+    
+// Fonction arrêt oiseau
+    
 	this.stopGame = function(){
 		this.bg.stopScroll();
 		this.ground.stopScroll();
@@ -127,28 +138,36 @@ game.States.play = function(){
 	}
 
 	this.fly = function(){
-		this.bird.body.velocity.y = -350;
+		this.bird.body.velocity.y = -500;
 		game.add.tween(this.bird).to({angle:-30}, 100, null, true, 0, 0, false); //La tete monde lorsque l'oiseau monte
-		this.soundFly.play();
+		this.soundFly.play();//Son battement
 	}
 
+// Si pipe touchée game over
 	this.hitPipe = function(){
 		if(this.gameIsOver) return;
 		this.soundHitPipe.play();
 		this.gameOver();
 	}
+    
+// Si sol touché
 	this.hitGround = function(){
 		if(this.hasHitGround) return; // Si l'oiseau touche le sol
 		this.hasHitGround = true;
 		this.soundHitGround.play();
-		this.gameOver(true);
+		this.gameOver(true); // Game over
 	}
+    
+// Affichage Game OVer
 	this.gameOver = function(show_text){
 		this.gameIsOver = true;
 		this.stopGame();
-		if(show_text) this.showGameOverText();
+		if(show_text) this.showGameOverText();// Appel fonction showGameOverText
 	};
 
+    
+// Affichage du score actuel + meilleur score + bouton replay
+    
 	this.showGameOverText = function(){
 		this.scoreText.destroy();
 		game.bestScore = game.bestScore || 0;
@@ -166,15 +185,15 @@ game.States.play = function(){
 		replayBtn.anchor.setTo(0.5, 0);
 		this.gameOverGroup.y = 30;
 	}
+    
+// Génération des cheminées
 
-	this.generatePipes = function(gap){ //Generation des cheminées
-		gap = gap || 150; //Définition de l'espacement
-		var position = (505 - 320 - gap) + Math.floor((505 - 112 - 30 - gap - 505 + 320 + gap) * Math.random());
-		var topPipeY = position-360;
-		var bottomPipeY = position+gap;
-
+	this.generatePipes = function(gap){
+		gap = gap || 150; // Définition de l'espacement entre les pipes
+		var position = (505 - 320 - gap) + Math.floor((505 - 112 - 30 - gap - 505 + 320 + gap) * Math.random()); // Position des pipes aléatoire
+		var topPipeY = position-360; // Pipe du haut
+		var bottomPipeY = position+gap; // Pipe du bas
 		if(this.resetPipe(topPipeY,bottomPipeY)) return;
-
 		var topPipe = game.add.sprite(game.width, topPipeY, 'pipe', 0, this.pipeGroup);
 		var bottomPipe = game.add.sprite(game.width, bottomPipeY, 'pipe', 1, this.pipeGroup);
 		this.pipeGroup.setAll('checkWorldBounds',true);
@@ -182,13 +201,17 @@ game.States.play = function(){
 		this.pipeGroup.setAll('body.velocity.x', -this.gameSpeed);
 	}
 
-	this.resetPipe = function(topPipeY,bottomPipeY){//Reset des pipes
+// Reset des pipes après leur disparition
+    
+	this.resetPipe = function(topPipeY,bottomPipeY){
 		var i = 0;
 		this.pipeGroup.forEachDead(function(pipe){
-			if(pipe.y<=0){ //Pipe du haut
+			if(pipe.y<=0){ // Ne pas afficher les pipes hors de l'écran
 				pipe.reset(game.width, topPipeY);
 				pipe.hasScored = false;
-			}else{
+			}
+            
+            else{
 				pipe.reset(game.width, bottomPipeY);
 			}
 			pipe.body.velocity.x = -this.gameSpeed;
@@ -208,7 +231,8 @@ game.States.play = function(){
 	}
 }
 
-//
+// Cheminement du jeu
+
 game.state.add('boot',game.States.boot);
 game.state.add('preload',game.States.preload);
 game.state.add('menu',game.States.menu);
