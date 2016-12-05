@@ -1,15 +1,10 @@
 // Déclaration de Phaser
 
-var game = new Phaser.Game(800,500,Phaser.AUTO,'game');
+var game = new Phaser.Game(2000,500,Phaser.AUTO,'game');
 game.States = {}; 
 
 game.States.boot = function(){
 	this.preload = function(){
-		if(!game.device.desktop){//If ecran d'ordinateur
-			this.scale.scaleMode = Phaser.ScaleManager.EXACT_FIT;
-			this.scale.forcePortrait = true;
-			this.scale.refresh();
-		}
 		game.load.image('loading','assets/preloader.gif');
 	};
 	this.create = function(){
@@ -95,7 +90,7 @@ game.States.play = function(){
 		game.time.events.loop(900, this.generatePipes, this);
 		game.time.events.stop(false);
 		game.input.onDown.addOnce(this.test, this);
-	};
+        };
     
 	this.update = function(){
 		if(!this.hasStarted) return; 
@@ -106,16 +101,24 @@ game.States.play = function(){
 	}
 
 	this.test = function(){
-		this.gameSpeed = 600; //Définition de la vitesse de défilement
+		if(this.score<=5){
+            this.gameSpeed = 600; // Définition de la vitesse de défilement
+            }
+        if(this.score>5){
+            this.gameSpeed = 1000; // Augmentation de la vitesse après un certain score
+        }
 		this.gameIsOver = false;
 		this.hasHitGround = false;
 		this.hasStarted = true;
 		this.score = 0;
 		this.bg.autoScroll(-(this.gameSpeed/10),0);
 		this.ground.autoScroll(-this.gameSpeed,0);
-		this.bird.body.gravity.y = 2000; // Définition de la gravité (1000 mode normal - 1150 plus difficile)
+		this.bird.body.gravity.y = 1000; // Définition de la gravité (1000 mode normal - 1150 plus difficile)
 		this.readyText.destroy();
 		this.playTip.destroy();
+        
+        // Input clic et barre espace
+        
 		game.input.onDown.add(this.fly, this);
         var spaceKey = game.input.keyboard.addKey(
                 Phaser.Keyboard.SPACEBAR);
@@ -158,7 +161,7 @@ game.States.play = function(){
 		this.gameOver(true); // Game over
 	}
     
-// Affichage Game OVer
+// Affichage Game Over
 	this.gameOver = function(show_text){
 		this.gameIsOver = true;
 		this.stopGame();
@@ -180,10 +183,10 @@ game.States.play = function(){
 		var replayBtn = game.add.button(game.width/2, 210, 'btn', function(){//Bouton "replay"
 			game.state.start('play');
 		}, this, null, null, null, null, this.gameOverGroup);
-		gameOverText.anchor.setTo(0.5, 0);
+		gameOverText.anchor.setTo(0.5, 1);
 		scoreboard.anchor.setTo(0.5, 0);
 		replayBtn.anchor.setTo(0.5, 0);
-		this.gameOverGroup.y = 30;
+		this.gameOverGroup.y = 150;
 	}
     
 // Génération des cheminées
